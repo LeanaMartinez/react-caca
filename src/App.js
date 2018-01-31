@@ -1,5 +1,4 @@
 import React, {Component} from 'react';
-import logo from './logo.svg';
 import './App.css';
 
 class App extends React.Component {
@@ -7,7 +6,8 @@ class App extends React.Component {
         super();
         this.state = {
             seriesList: [],
-            seriesEpisodesList: []
+            seriesEpisodesList: [],
+            display: []
         };
     }
 
@@ -22,19 +22,64 @@ class App extends React.Component {
             .catch(function (error) {
                 console.log(error);
             })
-            .then(function () {
-                alert("j'ai fait ce que j'ai pu");
-            });
+
+        fetch('seriesEpisodesList.json', {})
+            .then(response => response.json())
+            .then(seriesEpisodesListDepuisFichier => {
+                this.setState({ seriesEpisodesList: seriesEpisodesListDepuisFichier });
+
+            })
+            .catch(function (error) {
+                console.log(error);
+            })
 
     }
+
+
+    onKeyUp = (event) => {
+        let inputValue = event.target.value.toLowerCase();
+        let matchingSeries = [];
+
+        if (inputValue.length !== 0) {
+            matchingSeries = this.state.seriesList.filter(
+                (a) => (a.seriesName.toLowerCase().indexOf(inputValue) > -1)
+            );
+        }
+
+        let display = [];
+        for (let matchingSerie of matchingSeries) {
+            let matchingEpisodesList = this.state.seriesEpisodesList.filter(
+                (b) => (b.serie_id === matchingSerie.id)
+            );
+            display.push({
+                'title': matchingSerie.seriesName,
+                'episodes': matchingEpisodesList[0].episodes_list
+            });
+        }
+        this.setState({ display: display})
+        console.log(display)
+    };
 
     render() {
         return (
             <div>
+                <p>Série Name</p>
+                <input type="text" onKeyUp={this.onKeyUp} />
                 <ul>
-                    {this.state.seriesList.length ?
-                        this.state.seriesList.map(item => <li key={item.id}>{item.seriesName}</li>)
-                        : <li>Loading...</li>
+                    {this.state.display.length ?
+                        this.state.display.map((serie) => (
+                            <li key={serie.title}>
+                                {serie.title}
+                                <ul>
+                                    {serie.episodes.map((episode) =>
+                                        <li key={episode.episodeName}>
+                                            {episode.episodeName}
+                                        </li>
+                                    )}
+                                </ul>
+                            </li>
+                        ))
+                        : <p>Il n{"'"}y a rien, et c{"'"}est fort dommage</p>
                     }
                 </ul>
             </div>
